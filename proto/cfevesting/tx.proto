@@ -17,6 +17,7 @@ service Msg {
   rpc WithdrawAllAvailable(MsgWithdrawAllAvailable) returns (MsgWithdrawAllAvailableResponse);
   rpc CreateVestingAccount(MsgCreateVestingAccount) returns (MsgCreateVestingAccountResponse);
   rpc SendToVestingAccount(MsgSendToVestingAccount) returns (MsgSendToVestingAccountResponse);
+  rpc VestingCession(MsgVestingCession) returns (MsgVestingCessionResponse);
 // this line is used by starport scaffolding # proto/tx/rpc
 }
 
@@ -60,6 +61,15 @@ message MsgSendToVestingAccount {
 }
 
 message MsgSendToVestingAccountResponse {
+}
+
+message MsgVestingCession {
+  string creator = 1;
+  string receiverAddress = 2;
+  uint64 amount = 3;
+}
+
+message MsgVestingCessionResponse {
 }
 
 // this line is used by starport scaffolding # proto/tx/message
