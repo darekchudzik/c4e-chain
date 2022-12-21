@@ -28,6 +28,8 @@ export type CfevestingMsgCreateVestingPoolResponse = object;
 
 export type CfevestingMsgSendToVestingAccountResponse = object;
 
+export type CfevestingMsgVestingCessionResponse = object;
+
 export interface CfevestingMsgWithdrawAllAvailableResponse {
   withdrawn?: string;
 }

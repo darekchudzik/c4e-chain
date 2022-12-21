@@ -15,7 +15,6 @@ message NewVestingPool {
   string amount = 3;
   string duration = 4;
   string vestingType = 5;
-
 }
 
 message NewVestingAccountFromVestingPool {
@@ -29,5 +28,11 @@ message NewVestingAccountFromVestingPool {
 message WithdrawAvailable{
   string owner_address = 1;
   string vesting_pool_name = 4;
+  string amount = 5;
+}
+
+message VestingCession {
+  string owner_address = 1;
+  string address = 2;
   string amount = 5;
 }

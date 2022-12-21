@@ -44,6 +44,14 @@ export interface MsgSendToVestingAccount {
 
 export interface MsgSendToVestingAccountResponse {}
 
+export interface MsgVestingCession {
+  creator: string;
+  receiverAddress: string;
+  amount: number;
+}
+
+export interface MsgVestingCessionResponse {}
+
 const baseMsgCreateVestingPool: object = {
   creator: "",
   name: "",
@@ -772,6 +780,158 @@ export const MsgSendToVestingAccountResponse = {
   },
 };
 
+const baseMsgVestingCession: object = {
+  creator: "",
+  receiverAddress: "",
+  amount: 0,
+};
+
+export const MsgVestingCession = {
+  encode(message: MsgVestingCession, writer: Writer = Writer.create()): Writer {
+    if (message.creator !== "") {
+      writer.uint32(10).string(message.creator);
+    }
+    if (message.receiverAddress !== "") {
+      writer.uint32(18).string(message.receiverAddress);
+    }
+    if (message.amount !== 0) {
+      writer.uint32(24).uint64(message.amount);
+    }
+    return writer;
+  },
+
+  decode(input: Reader | Uint8Array, length?: number): MsgVestingCession {
+    const reader = input instanceof Uint8Array ? new Reader(input) : input;
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = { ...baseMsgVestingCession } as MsgVestingCession;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.creator = reader.string();
+          break;
+        case 2:
+          message.receiverAddress = reader.string();
+          break;
+        case 3:
+          message.amount = longToNumber(reader.uint64() as Long);
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): MsgVestingCession {
+    const message = { ...baseMsgVestingCession } as MsgVestingCession;
+    if (object.creator !== undefined && object.creator !== null) {
+      message.creator = String(object.creator);
+    } else {
+      message.creator = "";
+    }
+    if (
+      object.receiverAddress !== undefined &&
+      object.receiverAddress !== null
+    ) {
+      message.receiverAddress = String(object.receiverAddress);
+    } else {
+      message.receiverAddress = "";
+    }
+    if (object.amount !== undefined && object.amount !== null) {
+      message.amount = Number(object.amount);
+    } else {
+      message.amount = 0;
+    }
+    return message;
+  },
+
+  toJSON(message: MsgVestingCession): unknown {
+    const obj: any = {};
+    message.creator !== undefined && (obj.creator = message.creator);
+    message.receiverAddress !== undefined &&
+      (obj.receiverAddress = message.receiverAddress);
+    message.amount !== undefined && (obj.amount = message.amount);
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<MsgVestingCession>): MsgVestingCession {
+    const message = { ...baseMsgVestingCession } as MsgVestingCession;
+    if (object.creator !== undefined && object.creator !== null) {
+      message.creator = object.creator;
+    } else {
+      message.creator = "";
+    }
+    if (
+      object.receiverAddress !== undefined &&
+      object.receiverAddress !== null
+    ) {
+      message.receiverAddress = object.receiverAddress;
+    } else {
+      message.receiverAddress = "";
+    }
+    if (object.amount !== undefined && object.amount !== null) {
+      message.amount = object.amount;
+    } else {
+      message.amount = 0;
+    }
+    return message;
+  },
+};
+
+const baseMsgVestingCessionResponse: object = {};
+
+export const MsgVestingCessionResponse = {
+  encode(
+    _: MsgVestingCessionResponse,
+    writer: Writer = Writer.create()
+  ): Writer {
+    return writer;
+  },
+
+  decode(
+    input: Reader | Uint8Array,
+    length?: number
+  ): MsgVestingCessionResponse {
+    const reader = input instanceof Uint8Array ? new Reader(input) : input;
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = {
+      ...baseMsgVestingCessionResponse,
+    } as MsgVestingCessionResponse;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(_: any): MsgVestingCessionResponse {
+    const message = {
+      ...baseMsgVestingCessionResponse,
+    } as MsgVestingCessionResponse;
+    return message;
+  },
+
+  toJSON(_: MsgVestingCessionResponse): unknown {
+    const obj: any = {};
+    return obj;
+  },
+
+  fromPartial(
+    _: DeepPartial<MsgVestingCessionResponse>
+  ): MsgVestingCessionResponse {
+    const message = {
+      ...baseMsgVestingCessionResponse,
+    } as MsgVestingCessionResponse;
+    return message;
+  },
+};
+
 /** Msg defines the Msg service. */
 export interface Msg {
   CreateVestingPool(
@@ -783,10 +943,13 @@ export interface Msg {
   CreateVestingAccount(
     request: MsgCreateVestingAccount
   ): Promise<MsgCreateVestingAccountResponse>;
-  /** this line is used by starport scaffolding # proto/tx/rpc */
   SendToVestingAccount(
     request: MsgSendToVestingAccount
   ): Promise<MsgSendToVestingAccountResponse>;
+  /** this line is used by starport scaffolding # proto/tx/rpc */
+  VestingCession(
+    request: MsgVestingCession
+  ): Promise<MsgVestingCessionResponse>;
 }
 
 export class MsgClientImpl implements Msg {
@@ -847,6 +1010,20 @@ export class MsgClientImpl implements Msg {
     );
     return promise.then((data) =>
       MsgSendToVestingAccountResponse.decode(new Reader(data))
+    );
+  }
+
+  VestingCession(
+    request: MsgVestingCession
+  ): Promise<MsgVestingCessionResponse> {
+    const data = MsgVestingCession.encode(request).finish();
+    const promise = this.rpc.request(
+      "chain4energy.c4echain.cfevesting.Msg",
+      "VestingCession",
+      data
+    );
+    return promise.then((data) =>
+      MsgVestingCessionResponse.decode(new Reader(data))
     );
   }
 }

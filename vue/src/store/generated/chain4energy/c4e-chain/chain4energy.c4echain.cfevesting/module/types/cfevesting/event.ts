@@ -29,6 +29,12 @@ export interface WithdrawAvailable {
   amount: string;
 }
 
+export interface VestingCession {
+  owner_address: string;
+  address: string;
+  amount: string;
+}
+
 const baseNewVestingAccount: object = { address: "" };
 
 export const NewVestingAccount = {
@@ -463,6 +469,100 @@ export const WithdrawAvailable = {
       message.vesting_pool_name = object.vesting_pool_name;
     } else {
       message.vesting_pool_name = "";
+    }
+    if (object.amount !== undefined && object.amount !== null) {
+      message.amount = object.amount;
+    } else {
+      message.amount = "";
+    }
+    return message;
+  },
+};
+
+const baseVestingCession: object = {
+  owner_address: "",
+  address: "",
+  amount: "",
+};
+
+export const VestingCession = {
+  encode(message: VestingCession, writer: Writer = Writer.create()): Writer {
+    if (message.owner_address !== "") {
+      writer.uint32(10).string(message.owner_address);
+    }
+    if (message.address !== "") {
+      writer.uint32(18).string(message.address);
+    }
+    if (message.amount !== "") {
+      writer.uint32(42).string(message.amount);
+    }
+    return writer;
+  },
+
+  decode(input: Reader | Uint8Array, length?: number): VestingCession {
+    const reader = input instanceof Uint8Array ? new Reader(input) : input;
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = { ...baseVestingCession } as VestingCession;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.owner_address = reader.string();
+          break;
+        case 2:
+          message.address = reader.string();
+          break;
+        case 5:
+          message.amount = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): VestingCession {
+    const message = { ...baseVestingCession } as VestingCession;
+    if (object.owner_address !== undefined && object.owner_address !== null) {
+      message.owner_address = String(object.owner_address);
+    } else {
+      message.owner_address = "";
+    }
+    if (object.address !== undefined && object.address !== null) {
+      message.address = String(object.address);
+    } else {
+      message.address = "";
+    }
+    if (object.amount !== undefined && object.amount !== null) {
+      message.amount = String(object.amount);
+    } else {
+      message.amount = "";
+    }
+    return message;
+  },
+
+  toJSON(message: VestingCession): unknown {
+    const obj: any = {};
+    message.owner_address !== undefined &&
+      (obj.owner_address = message.owner_address);
+    message.address !== undefined && (obj.address = message.address);
+    message.amount !== undefined && (obj.amount = message.amount);
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<VestingCession>): VestingCession {
+    const message = { ...baseVestingCession } as VestingCession;
+    if (object.owner_address !== undefined && object.owner_address !== null) {
+      message.owner_address = object.owner_address;
+    } else {
+      message.owner_address = "";
+    }
+    if (object.address !== undefined && object.address !== null) {
+      message.address = object.address;
+    } else {
+      message.address = "";
     }
     if (object.amount !== undefined && object.amount !== null) {
       message.amount = object.amount;
