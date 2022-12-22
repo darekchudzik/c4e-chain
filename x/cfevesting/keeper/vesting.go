@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"fmt"
 	"strconv"
 	"time"
 
@@ -398,5 +399,86 @@ func (k Keeper) newVestingAccount(ctx sdk.Context, toAddress string, amount sdk.
 		return sdkerrors.Wrap(types.ErrSendCoins, sdkerrors.Wrapf(err, "new vesting account - send coins to vesting account error").Error())
 	}
 
+	return nil
+}
+
+func (k Keeper) VestingCesion(ctx sdk.Context, fromAddress string, toAddress string, amount sdk.Int) error {
+	denom := k.GetParams(ctx).Denom
+	ak := k.account
+	bk := k.bank
+	coinToSend := sdk.NewCoin(denom, amount)
+	coinsToSend := sdk.NewCoins(coinToSend)
+	if err := bk.IsSendEnabledCoins(ctx, coinsToSend...); err != nil {
+		k.Logger(ctx).Error("create vesting account send coins disabled", "error", err.Error())
+		return sdkerrors.Wrap(err, "create vesting account - send coins disabled")
+	}
+
+	from, err := sdk.AccAddressFromBech32(fromAddress)
+	if err != nil {
+		k.Logger(ctx).Error("create vesting account from-address parsing error", "fromAddress", fromAddress, "error", err.Error())
+		return sdkerrors.Wrap(types.ErrParsing, sdkerrors.Wrapf(err, "create vesting account - from-address parsing error: %s", fromAddress).Error())
+	}
+	to, err := sdk.AccAddressFromBech32(toAddress)
+	if err != nil {
+		k.Logger(ctx).Error("create vesting account to-address parsing error", "toAddress", toAddress, "error", err.Error())
+		return sdkerrors.Wrap(types.ErrParsing, sdkerrors.Wrapf(err, "create vesting account - to-address parsing error: %s", toAddress).Error())
+	}
+
+	if bk.BlockedAddr(to) {
+		k.Logger(ctx).Error("create vesting account account is not allowed to receive funds error", "toAddress", toAddress)
+		return sdkerrors.Wrapf(types.ErrAccountNotAllowedToReceiveFunds, "create vesting account - account address: %s", toAddress)
+	}
+
+	fromAcc := ak.GetAccount(ctx, from)
+	fmt.Println(fromAcc)
+	if fromAcc == nil {
+		k.Logger(ctx).Error("create vesting account account already exists error", "toAddress", toAddress)
+		return sdkerrors.Wrapf(types.ErrAlreadyExists, "create vesting account - account address: %s", toAddress)
+	}
+
+	vestingAcc := fromAcc.(*vestingtypes.ContinuousVestingAccount)
+	k.Logger(ctx).Debug("create vesting account", "fromAddress", fromAddress, "toAddress", toAddress,
+		"amount", amount, "startTime", vestingAcc.StartTime, "endTime", vestingAcc.EndTime)
+	fromBalance := bk.GetBalance(ctx, from, denom)
+	fromLocked := bk.LockedCoins(ctx, from)
+	spendable := fromBalance.Sub(sdk.NewCoin(denom, fromLocked.AmountOf(denom)))
+	vestingAcc.OriginalVesting = vestingAcc.OriginalVesting.Sub(sdk.NewCoins(spendable)).Sub(coinsToSend)
+	ak.SetAccount(ctx, vestingAcc)
+	if acc := ak.GetAccount(ctx, to); acc != nil {
+		k.Logger(ctx).Error("create vesting account account already exists error", "toAddress", toAddress)
+		return sdkerrors.Wrapf(types.ErrAlreadyExists, "create vesting account - account address: %s", toAddress)
+	}
+
+	baseAccount := ak.NewAccountWithAddress(ctx, to)
+	if _, ok := baseAccount.(*authtypes.BaseAccount); !ok {
+		k.Logger(ctx).Error("create vesting account invalid account type; expected: BaseAccount", "notExpectedAccount", baseAccount)
+		return sdkerrors.Wrapf(types.ErrInvalidAccountType, "create vesting account - expected BaseAccount, got: %T", baseAccount)
+	}
+
+	baseVestingAccount := vestingtypes.NewBaseVestingAccount(baseAccount.(*authtypes.BaseAccount), coinsToSend.Sort(), vestingAcc.EndTime)
+	startTime := ctx.BlockTime()
+	acc := vestingtypes.NewContinuousVestingAccountRaw(baseVestingAccount, startTime.Unix())
+
+	ak.SetAccount(ctx, acc)
+	k.Logger(ctx).Debug("create vesting account", "baseAccount", baseVestingAccount.BaseAccount, "originalVesting",
+		baseVestingAccount.OriginalVesting, "delegatedFree", baseVestingAccount.DelegatedFree, "delegatedVesting",
+		baseVestingAccount.DelegatedVesting, "endTime", baseVestingAccount.EndTime, "startTime", acc.StartTime)
+	err = ctx.EventManager().EmitTypedEvent(&types.NewVestingAccount{
+		Address: acc.Address,
+	})
+	if err != nil {
+		k.Logger(ctx).Error("new vestig account emit event error", "error", err.Error())
+	}
+
+	err = bk.SendCoins(ctx, from, to, coinsToSend)
+	if err != nil {
+		k.Logger(ctx).Debug("create vesting account send coins to vesting account error", "fromAddress", fromAddress, "toAddress", toAddress,
+			"amount", amount, "error", err.Error())
+		return sdkerrors.Wrap(types.ErrSendCoins, sdkerrors.Wrapf(err,
+			"create vesting account - send coins to vesting account error (from: %s, to: %s, amount: %s)", fromAddress, toAddress, amount).Error())
+	}
+
+	k.AppendVestingAccount(ctx, types.VestingAccount{Address: acc.Address})
+	k.Logger(ctx).Debug("append vesting account", "address", acc.Address)
 	return nil
 }

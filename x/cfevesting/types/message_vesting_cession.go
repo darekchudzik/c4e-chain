@@ -9,11 +9,11 @@ const TypeMsgVestingCession = "vesting_cession"
 
 var _ sdk.Msg = &MsgVestingCession{}
 
-func NewMsgVestingCession(creator string, receiverAddress string, amount uint64) *MsgVestingCession {
+func NewMsgVestingCession(fromAddress string, toAddress string, amount sdk.Int) *MsgVestingCession {
 	return &MsgVestingCession{
-		Creator:         creator,
-		ReceiverAddress: receiverAddress,
-		Amount:          amount,
+		FromAddress: fromAddress,
+		ToAddress:   toAddress,
+		Amount:      amount,
 	}
 }
 
@@ -26,7 +26,7 @@ func (msg *MsgVestingCession) Type() string {
 }
 
 func (msg *MsgVestingCession) GetSigners() []sdk.AccAddress {
-	creator, err := sdk.AccAddressFromBech32(msg.Creator)
+	creator, err := sdk.AccAddressFromBech32(msg.FromAddress)
 	if err != nil {
 		panic(err)
 	}
@@ -39,7 +39,7 @@ func (msg *MsgVestingCession) GetSignBytes() []byte {
 }
 
 func (msg *MsgVestingCession) ValidateBasic() error {
-	_, err := sdk.AccAddressFromBech32(msg.Creator)
+	_, err := sdk.AccAddressFromBech32(msg.FromAddress)
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
 	}

@@ -590,3 +590,50 @@ func (h *C4eVestingUtils) MessageCreateVestingAccountError(
 	_, found := h.helperCfevestingKeeper.GetVestingAccount(ctx, vestingAccountCountBefore)
 	require.Equal(h.t, false, found)
 }
+
+func (h *ContextC4eVestingUtils) MessageNewVestingCession(
+	fromAddress sdk.AccAddress,
+	toAddress sdk.AccAddress,
+	amount sdk.Int,
+	amountBefore sdk.Int,
+	endTime time.Time,
+) {
+	h.C4eVestingUtils.MessageVestingCession(
+		h.testContext.GetContext(),
+		fromAddress,
+		toAddress,
+		amount,
+		amountBefore,
+		endTime,
+	)
+}
+
+func (h *C4eVestingUtils) MessageVestingCession(
+	ctx sdk.Context,
+	fromAddress sdk.AccAddress,
+	toAddress sdk.AccAddress,
+	amount sdk.Int,
+	amountBefore sdk.Int,
+	endTime time.Time,
+) {
+	h.bankUtils.VerifyAccountDefultDenomBalance(ctx, fromAddress, amountBefore)
+	vestingAccountCountBefore := h.helperCfevestingKeeper.GetVestingAccountCount(ctx)
+	msgServer, msgServerCtx := cfevestingmodulekeeper.NewMsgServerImpl(*h.helperCfevestingKeeper), sdk.WrapSDKContext(ctx)
+
+	msg := cfevestingtypes.MsgVestingCession{
+		FromAddress: fromAddress.String(),
+		ToAddress:   toAddress.String(),
+		Amount:      amount,
+	}
+	_, err := msgServer.VestingCession(msgServerCtx, &msg)
+	require.EqualValues(h.t, nil, err)
+
+	vestingAccountCountAfter := h.helperCfevestingKeeper.GetVestingAccountCount(ctx)
+	require.EqualValues(h.t, vestingAccountCountBefore+1, vestingAccountCountAfter)
+
+	h.bankUtils.VerifyAccountDefultDenomBalance(ctx, fromAddress, amountBefore.Sub(amount))
+	h.authUtils.VerifyVestingAccount(ctx, toAddress, commontestutils.DefaultTestDenom, amount, ctx.BlockTime(), endTime)
+	accFromList, found := h.helperCfevestingKeeper.GetVestingAccount(ctx, vestingAccountCountBefore)
+	require.Equal(h.t, true, found)
+	require.Equal(h.t, toAddress.String(), accFromList.Address)
+}

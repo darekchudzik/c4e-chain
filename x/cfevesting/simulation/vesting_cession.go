@@ -19,7 +19,7 @@ func SimulateMsgVestingCession(
 	) (simtypes.OperationMsg, []simtypes.FutureOperation, error) {
 		simAccount, _ := simtypes.RandomAcc(r, accs)
 		msg := &types.MsgVestingCession{
-			Creator: simAccount.Address.String(),
+			FromAddress: simAccount.Address.String(),
 		}
 
 		// TODO: Handling the VestingCession simulation

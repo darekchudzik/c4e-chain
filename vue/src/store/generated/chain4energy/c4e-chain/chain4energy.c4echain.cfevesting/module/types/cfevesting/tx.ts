@@ -45,9 +45,9 @@ export interface MsgSendToVestingAccount {
 export interface MsgSendToVestingAccountResponse {}
 
 export interface MsgVestingCession {
-  creator: string;
-  receiverAddress: string;
-  amount: number;
+  from_address: string;
+  to_address: string;
+  amount: string;
 }
 
 export interface MsgVestingCessionResponse {}
@@ -781,21 +781,21 @@ export const MsgSendToVestingAccountResponse = {
 };
 
 const baseMsgVestingCession: object = {
-  creator: "",
-  receiverAddress: "",
-  amount: 0,
+  from_address: "",
+  to_address: "",
+  amount: "",
 };
 
 export const MsgVestingCession = {
   encode(message: MsgVestingCession, writer: Writer = Writer.create()): Writer {
-    if (message.creator !== "") {
-      writer.uint32(10).string(message.creator);
+    if (message.from_address !== "") {
+      writer.uint32(10).string(message.from_address);
     }
-    if (message.receiverAddress !== "") {
-      writer.uint32(18).string(message.receiverAddress);
+    if (message.to_address !== "") {
+      writer.uint32(18).string(message.to_address);
     }
-    if (message.amount !== 0) {
-      writer.uint32(24).uint64(message.amount);
+    if (message.amount !== "") {
+      writer.uint32(34).string(message.amount);
     }
     return writer;
   },
@@ -808,13 +808,13 @@ export const MsgVestingCession = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          message.creator = reader.string();
+          message.from_address = reader.string();
           break;
         case 2:
-          message.receiverAddress = reader.string();
+          message.to_address = reader.string();
           break;
-        case 3:
-          message.amount = longToNumber(reader.uint64() as Long);
+        case 4:
+          message.amount = reader.string();
           break;
         default:
           reader.skipType(tag & 7);
@@ -826,55 +826,49 @@ export const MsgVestingCession = {
 
   fromJSON(object: any): MsgVestingCession {
     const message = { ...baseMsgVestingCession } as MsgVestingCession;
-    if (object.creator !== undefined && object.creator !== null) {
-      message.creator = String(object.creator);
+    if (object.from_address !== undefined && object.from_address !== null) {
+      message.from_address = String(object.from_address);
     } else {
-      message.creator = "";
+      message.from_address = "";
     }
-    if (
-      object.receiverAddress !== undefined &&
-      object.receiverAddress !== null
-    ) {
-      message.receiverAddress = String(object.receiverAddress);
+    if (object.to_address !== undefined && object.to_address !== null) {
+      message.to_address = String(object.to_address);
     } else {
-      message.receiverAddress = "";
+      message.to_address = "";
     }
     if (object.amount !== undefined && object.amount !== null) {
-      message.amount = Number(object.amount);
+      message.amount = String(object.amount);
     } else {
-      message.amount = 0;
+      message.amount = "";
     }
     return message;
   },
 
   toJSON(message: MsgVestingCession): unknown {
     const obj: any = {};
-    message.creator !== undefined && (obj.creator = message.creator);
-    message.receiverAddress !== undefined &&
-      (obj.receiverAddress = message.receiverAddress);
+    message.from_address !== undefined &&
+      (obj.from_address = message.from_address);
+    message.to_address !== undefined && (obj.to_address = message.to_address);
     message.amount !== undefined && (obj.amount = message.amount);
     return obj;
   },
 
   fromPartial(object: DeepPartial<MsgVestingCession>): MsgVestingCession {
     const message = { ...baseMsgVestingCession } as MsgVestingCession;
-    if (object.creator !== undefined && object.creator !== null) {
-      message.creator = object.creator;
+    if (object.from_address !== undefined && object.from_address !== null) {
+      message.from_address = object.from_address;
     } else {
-      message.creator = "";
+      message.from_address = "";
     }
-    if (
-      object.receiverAddress !== undefined &&
-      object.receiverAddress !== null
-    ) {
-      message.receiverAddress = object.receiverAddress;
+    if (object.to_address !== undefined && object.to_address !== null) {
+      message.to_address = object.to_address;
     } else {
-      message.receiverAddress = "";
+      message.to_address = "";
     }
     if (object.amount !== undefined && object.amount !== null) {
       message.amount = object.amount;
     } else {
-      message.amount = 0;
+      message.amount = "";
     }
     return message;
   },
